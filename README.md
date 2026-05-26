@@ -1,6 +1,6 @@
 # SocialOps
 
-SocialOps is currently Arhan's local AI video and content operating system.
+SocialOps is currently  local AI video and content operating system.
 
 The near-term goal is not a production SaaS. The goal is to turn internal work
 from projects like VCPeer, Recoder, Career Profile, and SocialOps into planned,
