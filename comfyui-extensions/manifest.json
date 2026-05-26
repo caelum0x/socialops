@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "runtime": {
+    "path": "ComfyUI",
+    "customNodesPath": "ComfyUI/custom_nodes"
+  },
+  "extensions": [
+    {
+      "key": "nvidia-rtx-nodes",
+      "name": "Nvidia RTX Nodes for ComfyUI",
+      "repositoryUrl": "https://github.com/Comfy-Org/Nvidia_RTX_Nodes_ComfyUI",
+      "license": "Apache-2.0",
+      "status": "disabled",
+      "installPath": "ComfyUI/custom_nodes/Nvidia_RTX_Nodes_ComfyUI",
+      "mediaKinds": ["image", "video"],
+      "workflowPresetKeys": ["short-video-frame-set", "video-thumbnail"],
+      "notes": "Official Comfy-Org candidate for accelerated image/video workflows. Disabled for the current MacBook-only setup; reconsider only for NVIDIA GPU or cloud GPU runtime."
+    },
+    {
+      "key": "comfyui-manager",
+      "name": "ComfyUI Manager",
+      "repositoryUrl": "https://github.com/Comfy-Org/ComfyUI-Manager",
+      "license": "GPL-3.0",
+      "status": "rejected",
+      "installPath": "ComfyUI/custom_nodes/ComfyUI-Manager",
+      "mediaKinds": ["image", "video", "audio", "voice", "text_visual"],
+      "workflowPresetKeys": [],
+      "notes": "Rejected for production because it can install/remove arbitrary custom nodes. SocialOps uses its own manifest-based extension approval instead."
+    },
+    {
+      "key": "comfy-remote-nodes",
+      "name": "Comfy Remote Nodes",
+      "repositoryUrl": "https://github.com/Comfy-Org/comfy-remote-nodes",
+      "license": "GPL-3.0",
+      "status": "rejected",
+      "installPath": "ComfyUI/custom_nodes/comfy-remote-nodes",
+      "mediaKinds": ["image", "video", "audio", "voice", "text_visual"],
+      "workflowPresetKeys": [],
+      "notes": "Rejected for production until remote-node security boundaries are designed and reviewed."
+    }
+  ]
+}

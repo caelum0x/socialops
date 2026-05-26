@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@socialops/core/models": ["packages/core/src/models.ts"],
+      "@socialops/core/*": ["packages/core/src/*"],
+      "@socialops/approvals/transitions": ["packages/approvals/src/transitions.ts"],
+      "@socialops/approvals/*": ["packages/approvals/src/*"],
+      "@socialops/billing/plans": ["packages/billing/src/plans.ts"],
+      "@socialops/billing/*": ["packages/billing/src/*"],
+      "@socialops/content/policy": ["packages/content/src/policy.ts"],
+      "@socialops/content/*": ["packages/content/src/*"],
+      "@socialops/content-engine/purpose": ["packages/content-engine/src/purpose.ts"],
+      "@socialops/content-engine/video-pipeline": ["packages/content-engine/src/video-pipeline.ts"],
+      "@socialops/content-engine/*": ["packages/content-engine/src/*"],
+      "@socialops/db/schema": ["packages/db/src/schema.ts"],
+      "@socialops/db/*": ["packages/db/src/*"],
+      "@socialops/integrations/comfy-extensions": ["packages/integrations/src/comfy-extensions.ts"],
+      "@socialops/integrations/comfy-presets": ["packages/integrations/src/comfy-presets.ts"],
+      "@socialops/integrations/comfyui": ["packages/integrations/src/comfyui.ts"],
+      "@socialops/integrations/pokee": ["packages/integrations/src/pokee.ts"],
+      "@socialops/integrations/*": ["packages/integrations/src/*"],
+      "@socialops/prompts/templates": ["packages/prompts/src/templates.ts"],
+      "@socialops/prompts/*": ["packages/prompts/src/*"],
+      "@socialops/x-algorithm/ranking": ["x-algorithm/src/ranking.ts"],
+      "@socialops/x-algorithm/*": ["x-algorithm/src/*"]
+    }
+  },
+  "include": [
+    "apps/api/src/**/*.ts",
+    "apps/deck-worker/src/**/*.ts",
+    "apps/visual-worker/src/**/*.ts",
+    "apps/video-worker/src/**/*.ts",
+    "packages/**/*.ts",
+    "tools/**/*.ts"
+  ]
+}

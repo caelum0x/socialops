@@ -1,0 +1,9 @@
+{
+  "name": "@socialops/prompts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./templates": "./src/templates.ts"
+  }
+}

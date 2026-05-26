@@ -1,0 +1,11 @@
+{
+  "name": "@socialops/content-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./purpose": "./src/purpose.ts",
+    "./video-pipeline": "./src/video-pipeline.ts",
+    "./video-providers": "./src/video-providers.ts"
+  }
+}

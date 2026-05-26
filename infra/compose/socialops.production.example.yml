@@ -1,0 +1,251 @@
+name: socialops
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: socialops
+      POSTGRES_USER: socialops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - socialops_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socialops -d socialops"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - socialops_redis:/data
+
+  openpost:
+    build:
+      context: ../../apps/openpost
+    restart: unless-stopped
+    environment:
+      OPENPOST_BASE_URL: ${APP_URL}/social
+      OPENPOST_DB_PATH: /data/openpost.db
+      OPENPOST_JWT_SECRET: ${SESSION_SECRET}
+      OPENPOST_ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SOCIALOPS_OPENPOST_INTERNAL_TOKEN: ${SOCIALOPS_OPENPOST_INTERNAL_TOKEN}
+    volumes:
+      - socialops_openpost:/data
+      - socialops_openpost_media:/media
+    expose:
+      - "8080"
+
+  miniclaw:
+    build:
+      context: ../../apps/claw
+    restart: unless-stopped
+    environment:
+      OPENCLAW_CONFIG_PATH: /app/socialops/miniclaw.config.example.json
+      OPENCLAW_STATE_DIR: /data
+      OPENCLAW_NO_RESPAWN: "1"
+      OPENCLAW_GATEWAY_BIND: local
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - socialops_miniclaw:/data
+    expose:
+      - "18789"
+
+  comfyui:
+    build:
+      context: ../../ComfyUI
+    restart: unless-stopped
+    command: ["python", "main.py", "--listen", "0.0.0.0", "--port", "8188"]
+    environment:
+      PYTORCH_ENABLE_MPS_FALLBACK: "1"
+    volumes:
+      - socialops_comfyui_models:/app/models
+      - socialops_comfyui_output:/app/output
+    expose:
+      - "8188"
+    profiles:
+      - workers
+      - visuals
+
+  pokee-research:
+    build:
+      context: ../../PokeeResearchOSS
+    restart: unless-stopped
+    command: ["python", "start_tool_server.py", "--enable-cache", "--port", "8888"]
+    environment:
+      SERPER_API_KEY: ${SERPER_API_KEY}
+      JINA_API_KEY: ${JINA_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    expose:
+      - "8888"
+    profiles:
+      - research
+
+  visual-worker:
+    build:
+      context: ../..
+      dockerfile: apps/visual-worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COMFYUI_URL: ${COMFYUI_URL}
+      VISUAL_STORAGE_PATH: ${VISUAL_STORAGE_PATH:-/generated}
+      PUBLIC_MEDIA_BASE_URL: ${PUBLIC_MEDIA_BASE_URL}
+      OPENPOST_API_URL: ${OPENPOST_URL}
+      OPENPOST_API_KEY: ${SOCIALOPS_OPENPOST_INTERNAL_TOKEN}
+    volumes:
+      - socialops_generated_media:/generated
+    depends_on:
+      - postgres
+      - redis
+      - comfyui
+    expose:
+      - "3002"
+    profiles:
+      - workers
+      - visuals
+
+  video-worker:
+    build:
+      context: ../..
+      dockerfile: apps/video-worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      VISUAL_WORKER_URL: ${VISUAL_WORKER_URL:-http://visual-worker:3002}
+      VIDEO_STORAGE_PATH: ${VIDEO_STORAGE_PATH:-/rendered}
+      VIDEO_SCRATCH_PATH: ${VIDEO_SCRATCH_PATH:-/scratch}
+      PUBLIC_MEDIA_BASE_URL: ${PUBLIC_MEDIA_BASE_URL}
+      OPENPOST_API_URL: ${OPENPOST_URL}
+      OPENPOST_API_KEY: ${SOCIALOPS_OPENPOST_INTERNAL_TOKEN}
+      FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
+    volumes:
+      - socialops_rendered_video:/rendered
+      - socialops_video_scratch:/scratch
+    depends_on:
+      - visual-worker
+    expose:
+      - "3003"
+    profiles:
+      - workers
+
+  whisper:
+    build:
+      context: ../../services/whisper
+    restart: unless-stopped
+    environment:
+      WHISPER_MODEL: ${WHISPER_MODEL:-small.en}
+      WHISPER_CACHE_DIR: /cache
+    volumes:
+      - socialops_whisper_cache:/cache
+    expose:
+      - "18890"
+    profiles:
+      - workers
+      - audio
+
+  deck-worker:
+    build:
+      context: ../..
+      dockerfile: apps/deck-worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      DECK_STORAGE_PATH: ${DECK_STORAGE_PATH:-/decks}
+      PUBLIC_MEDIA_BASE_URL: ${PUBLIC_MEDIA_BASE_URL}
+    volumes:
+      - socialops_decks:/decks
+    depends_on:
+      - postgres
+      - redis
+    expose:
+      - "3004"
+    profiles:
+      - workers
+
+  api:
+    build:
+      context: ../../apps/api
+    restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OPENPOST_URL: ${OPENPOST_URL}
+      SOCIALOPS_OPENPOST_INTERNAL_TOKEN: ${SOCIALOPS_OPENPOST_INTERNAL_TOKEN}
+      MINICLAW_URL: ${MINICLAW_URL}
+      VISUAL_WORKER_URL: ${VISUAL_WORKER_URL:-http://visual-worker:3002}
+      VIDEO_WORKER_URL: ${VIDEO_WORKER_URL:-http://video-worker:3003}
+      DECK_WORKER_URL: ${DECK_WORKER_URL:-http://deck-worker:3004}
+      POKEE_RESEARCH_URL: ${POKEE_RESEARCH_URL}
+      SOCIALOPS_MEDIA_RUNTIME_PROFILE: ${SOCIALOPS_MEDIA_RUNTIME_PROFILE:-macbook_local}
+      SOCIALOPS_ALLOW_HEAVY_MEDIA_WORKFLOWS: ${SOCIALOPS_ALLOW_HEAVY_MEDIA_WORKFLOWS:-false}
+      # ---- Storage (Cloudflare R2 recommended) ----
+      STORAGE_KIND: ${STORAGE_KIND:-disabled}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY_ID:-}
+      STORAGE_SECRET_ACCESS_KEY: ${STORAGE_SECRET_ACCESS_KEY:-}
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-}
+      # ---- Whisper ----
+      USE_WHISPER: ${USE_WHISPER:-false}
+      WHISPER_URL: ${WHISPER_URL:-http://whisper:18890}
+      # ---- MiniClaw ----
+      USE_MINICLAW_GENERATION: ${USE_MINICLAW_GENERATION:-false}
+      # ---- Auth (Clerk optional) ----
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      CLERK_ISSUER: ${CLERK_ISSUER:-}
+      # ---- Video provider API keys (all optional; pick what you can afford) ----
+      KLING_AI_ACCESS_KEY: ${KLING_AI_ACCESS_KEY:-}
+      KLING_AI_SECRET_KEY: ${KLING_AI_SECRET_KEY:-}
+      HAILUO_API_KEY: ${HAILUO_API_KEY:-}
+      REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}
+      REPLICATE_MODEL_DEFAULT: ${REPLICATE_MODEL_DEFAULT:-lucataco/wan-2.2-5b-i2v}
+      FAL_API_KEY: ${FAL_API_KEY:-}
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
+      HUGGINGFACE_SPACE: ${HUGGINGFACE_SPACE:-}
+      HIGGSFIELD_API_KEY: ${HIGGSFIELD_API_KEY:-}
+      RUNWAY_API_KEY: ${RUNWAY_API_KEY:-}
+      LUMA_API_KEY: ${LUMA_API_KEY:-}
+      PIKA_API_KEY: ${PIKA_API_KEY:-}
+    depends_on:
+      - postgres
+      - redis
+      - openpost
+      - miniclaw
+      - deck-worker
+    expose:
+      - "3001"
+
+  web:
+    build:
+      context: ../../apps/web
+    restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL}
+      API_URL: http://api:3001
+    depends_on:
+      - api
+    expose:
+      - "3000"
+
+volumes:
+  socialops_postgres:
+  socialops_redis:
+  socialops_openpost:
+  socialops_openpost_media:
+  socialops_miniclaw:
+  socialops_comfyui_models:
+  socialops_comfyui_output:
+  socialops_generated_media:
+  socialops_rendered_video:
+  socialops_video_scratch:
+  socialops_whisper_cache:
+  socialops_decks:

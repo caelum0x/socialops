@@ -1,0 +1,12 @@
+{
+  "name": "@socialops/integrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./comfy-extensions": "./src/comfy-extensions.ts",
+    "./comfy-presets": "./src/comfy-presets.ts",
+    "./comfyui": "./src/comfyui.ts",
+    "./pokee": "./src/pokee.ts"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "socialops",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:workspace": "node tools/check-workspace.mjs",
+    "check:types": "tsc --noEmit",
+    "test:api": "pnpm --filter @socialops/api test",
+    "build:web": "pnpm --filter @socialops/web build",
+    "licenses:inventory": "node tools/license-inventory.mjs",
+    "comfy:extensions": "node tools/comfy-extension-inventory.mjs",
+    "comfy:install-extension": "node tools/install-comfy-extension.mjs",
+    "dev:api": "pnpm --filter @socialops/api dev",
+    "dev:web": "pnpm --filter @socialops/web dev",
+    "dev:visual-worker": "pnpm --filter @socialops/visual-worker dev",
+    "dev:video-worker": "pnpm --filter @socialops/video-worker dev",
+    "dev:deck-worker": "pnpm --filter @socialops/deck-worker dev",
+    "migrate:api": "pnpm --filter @socialops/api migrate",
+    "seed:api": "pnpm --filter @socialops/api seed",
+    "dev:openpost": "cd apps/openpost && make dev",
+    "dev:miniclaw": "cd apps/claw && pnpm dev",
+    "dev:postiz": "cd postiz-app && source ~/.nvm/nvm.sh && nvm use && pnpm run dev",
+    "dev:comfyui": "cd ComfyUI && .venv/bin/python main.py",
+    "dev:pokee-tools": "cd PokeeResearchOSS && python start_tool_server.py --enable-cache",
+    "kling:twitter-videos": "node tools/kling-twitter-videos.mjs",
+    "ops": "node tools/socialops.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "25.8.0",
+    "@types/pg": "^8.20.0",
+    "tsx": "4.22.0",
+    "typescript": "^5.9.3"
+  }
+}

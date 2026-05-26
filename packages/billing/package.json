@@ -1,0 +1,9 @@
+{
+  "name": "@socialops/billing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./plans": "./src/plans.ts"
+  }
+}
